@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>K-Map Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Fonts -->
+
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="grid-bg"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+
+  <header>
+    <div class="logo-badge">KM</div>
+    <div>
+      <h1>K-Map Calculator</h1>
+      <div class="subtitle">Boolean Minimization</div>
+    </div>
+  </header>
+
+  <!-- CONTROLS -->
+
+  <div class="controls-row">
+
+```
+<div class="control-group">
+  <label>Variables</label>
+  <button onclick="setVars(2)">2</button>
+  <button class="active" onclick="setVars(3)">3</button>
+  <button onclick="setVars(4)">4</button>
+</div>
+
+<div class="control-group">
+  <label>Cell</label>
+  <button onclick="setCellMode('0')">0</button>
+  <button onclick="setCellMode('1')">1</button>
+  <button onclick="setCellMode('X')">X</button>
+</div>
+
+<div class="control-group">
+  <label>Mode</label>
+  <button onclick="setSolveMode('SOP')">SOP</button>
+  <button onclick="setSolveMode('POS')">POS</button>
+</div>
+
+<button class="solve-btn" onclick="solve()">Solve</button>
+<button class="clear-btn" onclick="clearMap()">Clear</button>
+```
+
+  </div>
+
+  <!-- MAIN -->
+
+  <div class="main-layout">
+
+```
+<!-- LEFT -->
+<div class="kmap-panel">
+  <h3>K-Map</h3>
+  <div id="kmapContainer"></div>
+</div>
+
+<!-- RIGHT -->
+<div class="right-panel">
+
+  <div class="result-card">
+    <h3>Result</h3>
+    <div id="equationDisplay">Click Solve</div>
+  </div>
+
+  <div class="result-card">
+    <h3>Truth Table</h3>
+    <div id="truthTableContainer"></div>
+  </div>
+
+</div>
+```
+
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
