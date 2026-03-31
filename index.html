@@ -1,99 +1,1062 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>K-Map Calculator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Map Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: #2a2a3a;
+    --border2: #3a3a4f;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffd93d;
+    --text: #e8e8f0;
+    --text2: #8888aa;
+    --text3: #5555772;
+    --cell-0: #1a1a28;
+    --cell-1: #1e3a2e;
+    --cell-x: #2a2210;
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
 
-  <!-- Fonts -->
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-  <!-- CSS -->
+  .grid-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(108,99,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,99,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
 
-  <link rel="stylesheet" href="style.css">
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .logo-badge {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 18px;
+    color: #fff; flex-shrink: 0;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #fff 40%, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
+    color: var(--text2);
+    margin-top: 2px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+  }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+  }
+
+  .control-group label {
+    font-size: 0.78rem;
+    color: var(--text2);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .var-btn {
+    width: 36px; height: 32px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text2);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+  }
+
+  .var-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .var-btn:hover:not(.active) {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .solve-btn {
+    padding: 0.6rem 1.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.5px;
+  }
+
+  .solve-btn:hover { opacity: 0.9; }
+  .solve-btn:active { transform: scale(0.97); }
+
+  .clear-btn {
+    padding: 0.6rem 1.2rem;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .clear-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 750px) {
+    .main-layout { grid-template-columns: 1fr; }
+  }
+
+  .kmap-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+
+  .kmap-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 1.2rem;
+  }
+
+  .kmap-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .kmap-table {
+    border-collapse: collapse;
+    position: relative;
+  }
+
+  .kmap-table .corner-cell {
+    width: 50px; height: 50px;
+    border: none;
+    background: transparent;
+    position: relative;
+  }
+
+  .corner-line {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .corner-line::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom right, transparent calc(50% - 0.5px), var(--border) calc(50%), transparent calc(50% + 0.5px));
+  }
+
+  .var-label-row { font-size: 0.75rem; font-weight: 700; color: var(--accent2); letter-spacing: 1px; }
+  .var-label-col { font-size: 0.75rem; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+
+  .kmap-table th, .kmap-table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .kmap-table th {
+    padding: 0.4rem 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text2);
+    font-weight: 400;
+  }
+
+  .kmap-cell {
+    width: 58px; height: 58px;
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    background: var(--cell-0);
+    border-radius: 4px;
+  }
+
+  .kmap-cell:hover { border-color: var(--accent); z-index: 2; }
+
+  .kmap-cell .cell-index {
+    position: absolute;
+    top: 3px; left: 4px;
+    font-size: 9px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.6;
+  }
+
+  .kmap-cell .cell-val {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text2);
+    user-select: none;
+    transition: all 0.12s;
+  }
+
+  .kmap-cell.val-1 { background: var(--cell-1); border-color: rgba(0,212,170,0.3); }
+  .kmap-cell.val-1 .cell-val { color: var(--accent2); }
+  .kmap-cell.val-x { background: var(--cell-x); border-color: rgba(255,217,61,0.3); }
+  .kmap-cell.val-x .cell-val { color: var(--accent4); }
+  .kmap-cell.val-0 .cell-val { color: #3a3a55; }
+
+  .kmap-cell.grouped {
+    box-shadow: 0 0 0 2px var(--group-color, var(--accent)) inset;
+  }
+
+  .legend-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--text2);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .legend-swatch {
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.3rem 1.5rem;
+  }
+
+  .result-card h3 {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 1rem;
+  }
+
+  .equation-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface2);
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    letter-spacing: 0.5px;
+  }
+
+  .eq-term { color: var(--accent2); }
+  .eq-plus { color: var(--text2); margin: 0 4px; }
+  .eq-var { color: #a0c4ff; }
+  .eq-complement { color: var(--accent3); }
+  .eq-empty { color: var(--text2); font-size: 0.85rem; font-style: italic; }
+
+  .groups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+
+  .group-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .group-color-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .group-minterms {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text2);
+  }
+
+  .group-term {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-left: auto;
+  }
+
+  /* Truth Table */
+  .truth-table-wrap {
+    overflow-x: auto;
+  }
+
+  .truth-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  .truth-table th {
+    background: var(--surface2);
+    color: var(--text2);
+    font-weight: 600;
+    padding: 0.5rem 0.8rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+  }
+
+  .truth-table td {
+    padding: 0.42rem 0.8rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.82rem;
+    transition: background 0.1s;
+  }
+
+  .truth-table tr:hover td { background: rgba(108,99,255,0.06); }
+
+  .truth-table td.out-1 { color: var(--accent2); font-weight: 700; }
+  .truth-table td.out-x { color: var(--accent4); font-weight: 700; }
+  .truth-table td.out-0 { color: #3a3a55; }
+  .truth-table td.row-num { color: var(--text2); font-size: 0.72rem; }
+
+  /* Highlight on solve */
+  .highlight-anim {
+    animation: pulseGlow 0.5s ease-out;
+  }
+
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(108,99,255,0.6); }
+    100% { box-shadow: 0 0 0 10px rgba(108,99,255,0); }
+  }
+
+  .kmap-svg-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .empty-state {
+    color: var(--text2);
+    font-size: 0.82rem;
+    font-style: italic;
+    padding: 0.5rem 0;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-sop { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .badge-pos { background: rgba(0,212,170,0.15); color: var(--accent2); }
+</style>
 </head>
-
 <body>
-
 <div class="grid-bg"></div>
-
 <div class="container">
-
-  <!-- HEADER -->
 
   <header>
     <div class="logo-badge">KM</div>
     <div>
       <h1>K-Map Calculator</h1>
-      <div class="subtitle">Boolean Minimization</div>
+      <div class="subtitle">Karnaugh Map Simplifier — SOP / POS Boolean Minimization</div>
     </div>
   </header>
 
-  <!-- CONTROLS -->
-
   <div class="controls-row">
-
-```
-<div class="control-group">
-  <label>Variables</label>
-  <button onclick="setVars(2)">2</button>
-  <button class="active" onclick="setVars(3)">3</button>
-  <button onclick="setVars(4)">4</button>
-</div>
-
-<div class="control-group">
-  <label>Cell</label>
-  <button onclick="setCellMode('0')">0</button>
-  <button onclick="setCellMode('1')">1</button>
-  <button onclick="setCellMode('X')">X</button>
-</div>
-
-<div class="control-group">
-  <label>Mode</label>
-  <button onclick="setSolveMode('SOP')">SOP</button>
-  <button onclick="setSolveMode('POS')">POS</button>
-</div>
-
-<button class="solve-btn" onclick="solve()">Solve</button>
-<button class="clear-btn" onclick="clearMap()">Clear</button>
-```
-
+    <div class="control-group">
+      <label>Variables</label>
+      <button class="var-btn" id="btn2" onclick="setVars(2)">2</button>
+      <button class="var-btn active" id="btn3" onclick="setVars(3)">3</button>
+      <button class="var-btn" id="btn4" onclick="setVars(4)">4</button>
+    </div>
+    <div class="control-group">
+      <label>Cell Value</label>
+      <button class="var-btn active" id="mode0" onclick="setCellMode('0')">0</button>
+      <button class="var-btn" id="mode1" onclick="setCellMode('1')">1</button>
+      <button class="var-btn" id="modex" onclick="setCellMode('X')">X</button>
+    </div>
+    <div class="control-group">
+      <label>Mode</label>
+      <button class="var-btn active" id="modeSOP" onclick="setSolveMode('SOP')">SOP</button>
+      <button class="var-btn" id="modePOS" onclick="setSolveMode('POS')">POS</button>
+    </div>
+    <button class="solve-btn" onclick="solve()">&#9654; Solve</button>
+    <button class="clear-btn" onclick="clearMap()">&#10006; Clear</button>
   </div>
-
-  <!-- MAIN -->
 
   <div class="main-layout">
+    <div class="kmap-panel">
+      <div class="kmap-title">&#9633; Karnaugh Map</div>
+      <div class="kmap-wrapper" id="kmapWrapper">
+        <div id="kmapContainer"></div>
+        <svg id="kmapSvg" class="kmap-svg-overlay" style="width:0;height:0;"></svg>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item">
+          <div class="legend-swatch" style="background:var(--cell-0);border:1px solid var(--border2);color:#3a3a55;">0</div> Zero
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch" style="background:var(--cell-1);border:1px solid rgba(0,212,170,0.3);color:var(--accent2);">1</div> One
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch" style="background:var(--cell-x);border:1px solid rgba(255,217,61,0.3);color:var(--accent4);">X</div> Don't Care
+        </div>
+      </div>
+    </div>
 
-```
-<!-- LEFT -->
-<div class="kmap-panel">
-  <h3>K-Map</h3>
-  <div id="kmapContainer"></div>
+    <div class="right-panel">
+      <div class="result-card">
+        <h3>&#9660; Minimized Expression</h3>
+        <div class="equation-display" id="equationDisplay">
+          <span class="eq-empty">Click cells then press Solve</span>
+        </div>
+        <div class="groups-list" id="groupsList"></div>
+      </div>
+
+      <div class="result-card">
+        <h3>&#9776; Truth Table</h3>
+        <div class="truth-table-wrap">
+          <div id="truthTableContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- RIGHT -->
-<div class="right-panel">
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let numVars = 3;
+let cellValues = [];   // '0', '1', 'X'
+let cellMode = '0';
+let solveMode = 'SOP';
 
-  <div class="result-card">
-    <h3>Result</h3>
-    <div id="equationDisplay">Click Solve</div>
-  </div>
+const VAR_NAMES = ['A','B','C','D'];
+const GROUP_COLORS = [
+  '#6c63ff','#00d4aa','#ff6b6b','#ffd93d',
+  '#ff9f43','#a29bfe','#74b9ff','#fd79a8'
+];
 
-  <div class="result-card">
-    <h3>Truth Table</h3>
-    <div id="truthTableContainer"></div>
-  </div>
+// Gray code orders
+const GRAY2 = [0,1,3,2];
+const GRAY4 = [0,1,3,2,6,7,5,4,12,13,15,14,10,11,9,8];
 
-</div>
-```
+function grayCode(n, cols) {
+  if (n === 2) {
+    const r = []; const c = [];
+    if (cols === 1) { return { rows: [0,1], cols: [0] }; }
+    if (cols === 2) { return { rows: [0,1], cols: [0,1] }; }
+  }
+  if (n === 3) return { rows: [0,1], cols: [0,1,3,2] };
+  if (n === 4) return { rows: [0,1,3,2], cols: [0,1,3,2] };
+}
 
-  </div>
+function getLayout() {
+  if (numVars === 2) return { rows: 2, cols: 2, rVars: 1, cVars: 1 };
+  if (numVars === 3) return { rows: 2, cols: 4, rVars: 1, cVars: 2 };
+  if (numVars === 4) return { rows: 4, cols: 4, rVars: 2, cVars: 2 };
+}
 
-</div>
+function getRowOrder() {
+  if (numVars === 2) return [0,1];
+  if (numVars === 3) return [0,1];
+  if (numVars === 4) return [0,1,3,2];
+}
 
-<script src="script.js"></script>
+function getColOrder() {
+  if (numVars === 2) return [0,1];
+  if (numVars === 3) return [0,1,3,2];
+  if (numVars === 4) return [0,1,3,2];
+}
 
+function cellIndex(ri, ci) {
+  const ro = getRowOrder(), co = getColOrder();
+  const lay = getLayout();
+  const rowBits = ro[ri];
+  const colBits = co[ci];
+  if (numVars === 2) return (rowBits << 1) | colBits;
+  if (numVars === 3) return (rowBits << 2) | colBits;
+  if (numVars === 4) return (rowBits << 2) | colBits;
+}
+
+function initMap() {
+  const size = 1 << numVars;
+  cellValues = Array(size).fill('0');
+  renderKMap();
+  renderTruthTable();
+  clearResults();
+}
+
+function setVars(n) {
+  numVars = n;
+  [2,3,4].forEach(v => document.getElementById('btn'+v).classList.toggle('active', v === n));
+  initMap();
+}
+
+function setCellMode(m) {
+  cellMode = m;
+  ['0','1','X'].forEach(v => document.getElementById('mode'+v).classList.toggle('active', v === m));
+}
+
+function setSolveMode(m) {
+  solveMode = m;
+  ['SOP','POS'].forEach(v => document.getElementById('mode'+v).classList.toggle('active', v === m));
+}
+
+function clearMap() {
+  const size = 1 << numVars;
+  cellValues = Array(size).fill('0');
+  renderKMap();
+  renderTruthTable();
+  clearResults();
+}
+
+function clearResults() {
+  document.getElementById('equationDisplay').innerHTML = '<span class="eq-empty">Click cells then press Solve</span>';
+  document.getElementById('groupsList').innerHTML = '';
+  document.getElementById('kmapSvg').innerHTML = '';
+}
+
+// ── Render K-Map ─────────────────────────────────────────────────────────────
+function renderKMap() {
+  const lay = getLayout();
+  const ro = getRowOrder(), co = getColOrder();
+  const rVarNames = VAR_NAMES.slice(0, lay.rVars);
+  const cVarNames = VAR_NAMES.slice(lay.rVars, numVars);
+
+  let html = `<table class="kmap-table">`;
+
+  // Header row
+  html += `<tr>`;
+  html += `<td class="corner-cell"><div class="corner-line"></div>
+    <span style="position:absolute;bottom:4px;left:6px;font-size:10px;color:var(--accent2);font-weight:700;">${cVarNames.join('')}</span>
+    <span style="position:absolute;top:4px;right:6px;font-size:10px;color:var(--accent);font-weight:700;">${rVarNames.join('')}</span>
+  </td>`;
+  for (let ci = 0; ci < lay.cols; ci++) {
+    const grayVal = co[ci];
+    const bits = grayVal.toString(2).padStart(lay.cVars, '0');
+    html += `<th class="var-label-row">${bits}</th>`;
+  }
+  html += `</tr>`;
+
+  // Data rows
+  for (let ri = 0; ri < lay.rows; ri++) {
+    html += `<tr>`;
+    const rowBits = ro[ri].toString(2).padStart(lay.rVars, '0');
+    html += `<th class="var-label-col">${rowBits}</th>`;
+    for (let ci = 0; ci < lay.cols; ci++) {
+      const idx = cellIndex(ri, ci);
+      const val = cellValues[idx] || '0';
+      const cls = val === '1' ? 'val-1' : val === 'X' ? 'val-x' : 'val-0';
+      html += `<td class="kmap-cell ${cls}" 
+        data-idx="${idx}" data-ri="${ri}" data-ci="${ci}"
+        onclick="toggleCell(${idx})"
+        title="Minterm m${idx}">
+        <span class="cell-index">m${idx}</span>
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+          <span class="cell-val">${val}</span>
+        </div>
+      </td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</table>`;
+
+  document.getElementById('kmapContainer').innerHTML = html;
+  // Size SVG overlay
+  setTimeout(() => {
+    const tbl = document.querySelector('.kmap-table');
+    const svg = document.getElementById('kmapSvg');
+    if (tbl) {
+      svg.style.width = tbl.offsetWidth + 'px';
+      svg.style.height = tbl.offsetHeight + 'px';
+    }
+  }, 10);
+}
+
+function toggleCell(idx) {
+  const cur = cellValues[idx];
+  if (cur === '0') cellValues[idx] = cellMode === '0' ? '1' : cellMode;
+  else if (cur === '1') cellValues[idx] = cellMode === '0' ? '0' : cellMode;
+  else cellValues[idx] = cellMode;
+  // Always cycle: 0->1->X->0
+  const cycle = { '0':'1', '1':'X', 'X':'0' };
+  if (cellMode === '0') cellValues[idx] = cycle[cur]; // free cycle
+  else cellValues[idx] = cellMode; // set specific
+
+  renderKMap();
+  renderTruthTable();
+  clearResults();
+}
+
+// ── Truth Table ───────────────────────────────────────────────────────────────
+function renderTruthTable() {
+  const size = 1 << numVars;
+  const vars = VAR_NAMES.slice(0, numVars);
+  let html = `<table class="truth-table"><thead><tr>`;
+  html += `<th>#</th>`;
+  vars.forEach(v => { html += `<th>${v}</th>`; });
+  html += `<th>F</th></tr></thead><tbody>`;
+
+  for (let i = 0; i < size; i++) {
+    const bits = i.toString(2).padStart(numVars, '0');
+    const val = cellValues[i] || '0';
+    const outCls = val === '1' ? 'out-1' : val === 'X' ? 'out-x' : 'out-0';
+    html += `<tr>`;
+    html += `<td class="row-num">${i}</td>`;
+    for (let b = 0; b < numVars; b++) {
+      html += `<td>${bits[b]}</td>`;
+    }
+    html += `<td class="${outCls}">${val}</td>`;
+    html += `</tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById('truthTableContainer').innerHTML = html;
+}
+
+// ── K-Map Solver ──────────────────────────────────────────────────────────────
+function solve() {
+  // Determine target: SOP = find 1s (and X as optional), POS = find 0s
+  const isSOP = solveMode === 'SOP';
+  const target = isSOP ? '1' : '0';
+  const dontCare = 'X';
+
+  // Get minterms and don't-cares
+  const size = 1 << numVars;
+  const minterms = [], dc = [];
+  for (let i = 0; i < size; i++) {
+    if (cellValues[i] === target) minterms.push(i);
+    else if (cellValues[i] === dontCare) dc.push(i);
+  }
+
+  if (minterms.length === 0) {
+    renderEquation(isSOP ? '0' : '1', [], []);
+    return;
+  }
+  if (minterms.length + dc.length === size) {
+    renderEquation(isSOP ? '1' : '0', [], []);
+    return;
+  }
+
+  // Find essential prime implicants using Quine-McCluskey-style grouping on K-map
+  const groups = findGroups(minterms, dc);
+  renderEquation(null, groups, minterms);
+  drawGroupOverlays(groups);
+}
+
+// Valid group sizes: 1, 2, 4, 8, 16
+function isPowerOf2(n) { return n > 0 && (n & (n-1)) === 0; }
+
+function findGroups(minterms, dc) {
+  const all = [...minterms, ...dc];
+  const size = 1 << numVars;
+  const lay = getLayout();
+  const rows = lay.rows, cols = lay.cols;
+
+  // Build position map: minterm index -> {ri, ci}
+  const posMap = {};
+  for (let ri = 0; ri < rows; ri++) {
+    for (let ci = 0; ci < cols; ci++) {
+      const idx = cellIndex(ri, ci);
+      posMap[idx] = { ri, ci };
+    }
+  }
+
+  // Generate all valid rectangular groups on K-map (wrapping)
+  function allRects() {
+    const rects = [];
+    // r/c sizes must be powers of 2
+    const rSizes = [1,2,4].filter(s => s <= rows);
+    const cSizes = [1,2,4,8].filter(s => s <= cols);
+    for (const rh of rSizes) {
+      for (const cw of cSizes) {
+        for (let r0 = 0; r0 < rows; r0++) {
+          for (let c0 = 0; c0 < cols; c0++) {
+            // Collect cells
+            const cells = [];
+            for (let dr = 0; dr < rh; dr++) {
+              for (let dc2 = 0; dc2 < cw; dc2++) {
+                const ri = (r0 + dr) % rows;
+                const ci = (c0 + dc2) % cols;
+                cells.push(cellIndex(ri, ci));
+              }
+            }
+            rects.push({ cells, r0, c0, rh, cw });
+          }
+        }
+      }
+    }
+    return rects;
+  }
+
+  const allSet = new Set(all);
+  const mintermSet = new Set(minterms);
+  const valid = allRects().filter(rect => {
+    // All cells must be in all (minterms+dc) and at least one must be a minterm
+    return rect.cells.every(c => allSet.has(c)) && rect.cells.some(c => mintermSet.has(c));
+  });
+
+  // Sort by size desc (prefer bigger groups)
+  valid.sort((a,b) => b.cells.length - a.cells.length);
+
+  // Greedy cover: pick essential prime implicants
+  const covered = new Set();
+  const chosen = [];
+
+  // Find essential PIs (groups that are the only one covering some minterm)
+  const mintermToCover = {};
+  minterms.forEach(m => { mintermToCover[m] = []; });
+  valid.forEach((rect, i) => {
+    rect.cells.forEach(c => {
+      if (mintermSet.has(c)) mintermToCover[c].push(i);
+    });
+  });
+
+  const essentialIdx = new Set();
+  minterms.forEach(m => {
+    if (mintermToCover[m].length === 1) essentialIdx.add(mintermToCover[m][0]);
+  });
+
+  essentialIdx.forEach(i => {
+    const rect = valid[i];
+    chosen.push(rect);
+    rect.cells.forEach(c => covered.add(c));
+  });
+
+  // Cover remaining minterms greedily
+  let uncovered = minterms.filter(m => !covered.has(m));
+  while (uncovered.length > 0) {
+    // Pick largest valid group covering most uncovered minterms
+    let best = null, bestScore = -1;
+    for (const rect of valid) {
+      const score = rect.cells.filter(c => mintermSet.has(c) && !covered.has(c)).length;
+      if (score > bestScore || (score === bestScore && best && rect.cells.length > best.cells.length)) {
+        bestScore = score;
+        best = rect;
+      }
+    }
+    if (!best || bestScore === 0) break;
+    chosen.push(best);
+    best.cells.forEach(c => covered.add(c));
+    uncovered = minterms.filter(m => !covered.has(m));
+  }
+
+  // Derive boolean expression for each group
+  return chosen.map((rect, i) => {
+    const term = deriveTerm(rect.cells);
+    return { ...rect, term, color: GROUP_COLORS[i % GROUP_COLORS.length] };
+  });
+}
+
+function deriveTerm(cells) {
+  // Find which variables are constant across all cells
+  const vars = VAR_NAMES.slice(0, numVars);
+  const terms = [];
+  for (let b = 0; b < numVars; b++) {
+    const bitPos = numVars - 1 - b;
+    const vals = cells.map(c => (c >> bitPos) & 1);
+    const allSame = vals.every(v => v === vals[0]);
+    if (allSame) {
+      if (solveMode === 'SOP') {
+        terms.push({ var: vars[b], comp: vals[0] === 0 });
+      } else {
+        // POS: if variable is 0 in all cells, add complemented
+        terms.push({ var: vars[b], comp: vals[0] === 1 });
+      }
+    }
+  }
+  if (terms.length === 0) return '1';
+  return terms;
+}
+
+function termToString(term) {
+  if (term === '0' || term === '1') return term;
+  return term.map(t => t.comp ? t.var + "'" : t.var).join('');
+}
+
+function renderEquation(fixed, groups, minterms) {
+  const el = document.getElementById('equationDisplay');
+  const gl = document.getElementById('groupsList');
+
+  if (fixed !== null) {
+    el.innerHTML = `<span class="eq-term">${fixed}</span>`;
+    gl.innerHTML = '';
+    return;
+  }
+
+  const isSOP = solveMode === 'SOP';
+  let eqHtml = '';
+  const termStrings = groups.map(g => termToString(g.term));
+
+  // Deduplicate
+  const seen = new Set();
+  const unique = [];
+  groups.forEach((g, i) => {
+    const s = termStrings[i];
+    if (!seen.has(s)) { seen.add(s); unique.push({ g, s }); }
+  });
+
+  if (isSOP) {
+    eqHtml = `<span class="eq-var">F</span><span class="eq-plus"> = </span>`;
+    eqHtml += unique.map(({ g, s }, i) => {
+      let tHtml = '';
+      if (s === '0' || s === '1') {
+        tHtml = `<span class="eq-term">${s}</span>`;
+      } else {
+        const term = g.term;
+        tHtml = term.map(t => t.comp
+          ? `<span class="eq-complement">${t.var}'</span>`
+          : `<span class="eq-var">${t.var}</span>`
+        ).join('');
+      }
+      return tHtml;
+    }).join('<span class="eq-plus"> + </span>');
+  } else {
+    eqHtml = `<span class="eq-var">F</span><span class="eq-plus"> = </span>`;
+    eqHtml += unique.map(({ g, s }) => {
+      if (s === '0' || s === '1') return `<span class="eq-term">${s}</span>`;
+      const term = g.term;
+      const inner = term.map(t => t.comp
+        ? `<span class="eq-complement">${t.var}'</span>`
+        : `<span class="eq-var">${t.var}</span>`
+      ).join(' + ');
+      return `<span class="eq-term">(</span>${inner}<span class="eq-term">)</span>`;
+    }).join('<span class="eq-plus"> · </span>');
+  }
+
+  el.innerHTML = eqHtml;
+  el.classList.add('highlight-anim');
+  setTimeout(() => el.classList.remove('highlight-anim'), 600);
+
+  // Groups list
+  gl.innerHTML = unique.map(({ g, s }) => {
+    const mintermList = g.cells.filter(c => cellValues[c] === (solveMode === 'SOP' ? '1' : '0'));
+    return `<div class="group-item">
+      <div class="group-color-dot" style="background:${g.color}"></div>
+      <span class="group-minterms">m(${mintermList.join(',')})</span>
+      <span class="group-term" style="color:${g.color}">${s === '1' || s === '0' ? s : (solveMode === 'SOP' ? s : '('+s+')')}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Draw Group Overlays on K-Map ──────────────────────────────────────────────
+function drawGroupOverlays(groups) {
+  const lay = getLayout();
+  const rows = lay.rows, cols = lay.cols;
+
+  // Get cell positions
+  function cellRect(ri, ci) {
+    const cells = document.querySelectorAll('.kmap-cell');
+    for (const c of cells) {
+      if (parseInt(c.dataset.ri) === ri && parseInt(c.dataset.ci) === ci) {
+        const wrapper = document.getElementById('kmapWrapper');
+        const wRect = wrapper.getBoundingClientRect();
+        const cRect = c.getBoundingClientRect();
+        return {
+          x: cRect.left - wRect.left,
+          y: cRect.top - wRect.top,
+          w: cRect.width,
+          h: cRect.height
+        };
+      }
+    }
+    return null;
+  }
+
+  // Build position map
+  const posMap = {};
+  for (let ri = 0; ri < rows; ri++) {
+    for (let ci = 0; ci < cols; ci++) {
+      posMap[cellIndex(ri, ci)] = { ri, ci };
+    }
+  }
+
+  const svg = document.getElementById('kmapSvg');
+  const tbl = document.querySelector('.kmap-table');
+  if (!tbl) return;
+  svg.style.width = tbl.offsetWidth + 'px';
+  svg.style.height = tbl.offsetHeight + 'px';
+
+  let svgContent = '';
+
+  groups.forEach((group, gi) => {
+    const color = group.color;
+    // Find bounding box of cells in grid coordinates
+    const positions = group.cells.map(c => posMap[c]).filter(Boolean);
+    if (!positions.length) return;
+
+    // Check wrapping
+    const riSet = [...new Set(positions.map(p => p.ri))];
+    const ciSet = [...new Set(positions.map(p => p.ci))];
+
+    const minRi = Math.min(...riSet), maxRi = Math.max(...riSet);
+    const minCi = Math.min(...ciSet), maxCi = Math.max(...ciSet);
+
+    // Check if wrapping
+    const rWraps = group.rh > 1 && (maxRi - minRi + 1 < group.rh);
+    const cWraps = group.cw > 1 && (maxCi - minCi + 1 < group.cw);
+
+    const pad = 4 + gi * 2;
+    const r = 8;
+
+    if (!rWraps && !cWraps) {
+      // Simple rectangle
+      const tl = cellRect(minRi, minCi);
+      const br = cellRect(maxRi, maxCi);
+      if (!tl || !br) return;
+      const x = tl.x - pad, y = tl.y - pad;
+      const w = (br.x + br.w) - tl.x + pad * 2;
+      const h = (br.y + br.h) - tl.y + pad * 2;
+      svgContent += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}"
+        fill="none" stroke="${color}" stroke-width="2.5" stroke-dasharray="6,3" opacity="0.85"/>`;
+    } else {
+      // Draw two rectangles for wrapping groups
+      if (cWraps && !rWraps) {
+        const leftCis = ciSet.filter(c => c > maxCi/2);
+        const rightCis = ciSet.filter(c => c <= maxCi/2);
+        [leftCis, rightCis].forEach(cis => {
+          if (!cis.length) return;
+          const mc = Math.min(...cis), xc = Math.max(...cis);
+          const tl = cellRect(minRi, mc);
+          const br = cellRect(maxRi, xc);
+          if (!tl || !br) return;
+          const x = tl.x - pad, y = tl.y - pad;
+          const w = (br.x + br.w) - tl.x + pad * 2;
+          const h = (br.y + br.h) - tl.y + pad * 2;
+          svgContent += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ry="${r}"
+            fill="none" stroke="${color}" stroke-width="2.5" stroke-dasharray="6,3" opacity="0.85"/>`;
+        });
+      } else {
+        // Fallback: highlight individual cells
+        group.cells.forEach(c => {
+          const p = posMap[c];
+          if (!p) return;
+          const cr = cellRect(p.ri, p.ci);
+          if (!cr) return;
+          svgContent += `<rect x="${cr.x+2}" y="${cr.y+2}" width="${cr.w-4}" height="${cr.h-4}" rx="4" ry="4"
+            fill="${color}" fill-opacity="0.12" stroke="${color}" stroke-width="1.5" opacity="0.85"/>`;
+        });
+      }
+    }
+  });
+
+  svg.innerHTML = svgContent;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+initMap();
+</script>
 </body>
 </html>
